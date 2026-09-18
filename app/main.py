@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from contextlib import asynccontextmanager
+from app.models.user import Users
 
 from app.core.database import engine,base 
 
