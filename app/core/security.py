@@ -1,22 +1,42 @@
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 import jwt
 
-# Password hashing setup
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app.core.config import settings
 
-SECRET_KEY = "apka_secret_key_yahan_hoga"
-ALGORITHM = "HS256"
+from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+# Explicitly set Bcrypt as the hasher
+password_hash = PasswordHash((BcryptHasher(),))
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
 
-def create_access_token(data: dict):
+
+
+def get_password_hash(password: str) -> str:
+    """Hashes a plain text password securely."""
+    return password_hash.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifies a plain text password against its hash."""
+    return password_hash.verify(plain_password, hashed_password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Creates a signed JWT token containing payload data and expiration time."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=30)
+
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+    encoded_jwt = jwt.encode(
+        to_encode, 
+        settings.SECRET_KEY, 
+        algorithm=settings.ALGORITHM
+    )
     return encoded_jwt

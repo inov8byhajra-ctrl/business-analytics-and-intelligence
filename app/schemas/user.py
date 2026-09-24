@@ -6,7 +6,9 @@ class UserBase(BaseModel):
     is_active: bool=True
     
 class UserCreate(UserBase):
-    password:str
+    password:str 
+    role: str = "regional_manager"
+    region: str | None = None
     
 class UserResponse(UserBase):
     id:int
