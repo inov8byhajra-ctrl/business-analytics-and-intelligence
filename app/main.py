@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.models.user import Users
 
 from app.core.database import engine,base 
+from app.api.endpoints import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,3 +27,5 @@ app = FastAPI(title=settings.PROJECT_NAME,lifespan=lifespan)
 @app.get("/")
 async def home():
     return {"project":settings.PROJECT_NAME,"status":"online"}
+
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])

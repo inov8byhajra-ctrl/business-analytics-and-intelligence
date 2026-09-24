@@ -13,6 +13,9 @@ class UserResponse(UserBase):
     is_superuser:bool
     created_at:datetime
     
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
     
     model_config=ConfigDict(from_attributes=True)
     
