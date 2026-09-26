@@ -1,31 +1,21 @@
-from fastapi import FastAPI
-from app.core.config import settings
 from contextlib import asynccontextmanager
-from app.models.user import Users
-
-from app.core.database import engine,base 
-from app.api.endpoints import auth
+from fastapi import FastAPI
+from app.api.endpoints import auth, users
+from app.core.database import engine, base
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"starting {settings.PROJECT_NAME}.... ")
-    
+    # This runs asynchronously when the server starts
     async with engine.begin() as conn:
-        
         await conn.run_sync(base.metadata.create_all)
-    print("database tables created successfully.")
-    
     yield
-    print("server is shutting down ...")
-    
-    await engine.dispose()
-    print("database connecion closed")
+    # Code here would run on server shutdown if needed
 
+app = FastAPI(title="InsightFlow Business Analytics API", lifespan=lifespan)
 
-app = FastAPI(title=settings.PROJECT_NAME,lifespan=lifespan)
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/api/users", tags=["Users & RBAC"])
 
 @app.get("/")
-async def home():
-    return {"project":settings.PROJECT_NAME,"status":"online"}
-
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+def root():
+    return {"message": "InsightFlow API is running"}

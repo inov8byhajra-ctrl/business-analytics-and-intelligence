@@ -1,20 +1,21 @@
-from sqlalchemy import Column,Integer,String,Boolean,DateTime,Enum
+from sqlalchemy import Column, Integer, String, Boolean, Enum
 from app.core.database import base
-from datetime import datetime
 import enum
 
-class UserRole(str, enum.Enum):
-    CFO = "cfo"
-    REGIONAL_MANAGER = "regional_manager"
-class Users(base):
+class Role(enum.Enum):
+    CFO = "CFO"
+    RM = "Regional Manager"
+
+class User(base):
     __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=True)
+    hashed_password = Column(String, nullable=False)
+    full_name = Column(String, nullable=False)
+    role = Column(Enum(Role), nullable=False)
+    company_name = Column(String, nullable=False)
     
-    id = Column(Integer,primary_key=True,index=True)
-    email = Column(String,unique=True,index=True,nullable=False)
-    hashed_password=Column(String,nullable=False)
-    
-    is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    region = Column(String, nullable=True)
-    role = Column(String, nullable=False)
+    # RM specific fields
+    is_active = Column(Boolean, default=True) 
+    rm_login_id = Column(String, unique=True, index=True, nullable=True) # 6-digit unique ID

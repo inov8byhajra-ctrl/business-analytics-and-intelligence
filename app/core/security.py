@@ -1,42 +1,24 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-import jwt
-
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+from jose import jwt
 from app.core.config import settings
 
-from pwdlib import PasswordHash
-from pwdlib.hashers.bcrypt import BcryptHasher
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Explicitly set Bcrypt as the hasher
-password_hash = PasswordHash((BcryptHasher(),))
+def verify_password(plain_password: str, hashed_password: str):
+    # Pakka hal: Truncate to 72 chars to prevent bcrypt crashes
+    if len(plain_password) > 72:
+        plain_password = plain_password[:72]
+    return pwd_context.verify(plain_password, hashed_password)
 
+def get_password_hash(password: str):
+    # Pakka hal: Truncate to 72 chars to prevent bcrypt crashes
+    if len(password) > 72:
+        password = password[:72]
+    return pwd_context.hash(password)
 
-
-
-def get_password_hash(password: str) -> str:
-    """Hashes a plain text password securely."""
-    return password_hash.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifies a plain text password against its hash."""
-    return password_hash.verify(plain_password, hashed_password)
-
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Creates a signed JWT token containing payload data and expiration time."""
+def create_access_token(data: dict):
     to_encode = data.copy()
-
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-
+    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-
-    encoded_jwt = jwt.encode(
-        to_encode, 
-        settings.SECRET_KEY, 
-        algorithm=settings.ALGORITHM
-    )
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
